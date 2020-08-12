@@ -24,7 +24,8 @@ struct shared_lib_table lib_table[NUM_WIDGETS_SUPPORTED] = {
 	{"asrc", "libsof_asrc.so", SOF_COMP_ASRC, 0, NULL},
 	{"eq-fir", "libsof_eq-fir.so", SOF_COMP_EQ_FIR, 0, NULL},
 	{"eq-iir", "libsof_eq-iir.so", SOF_COMP_EQ_IIR, 0, NULL},
-	{"dcblock", "libsof_dcblock.so", SOF_COMP_DCBLOCK, 0, NULL}
+	{"dcblock", "libsof_dcblock.so", SOF_COMP_DCBLOCK, 0, NULL},
+	{"crossover", "libsof_crossover.so", SOF_COMP_CROSSOVER, 0, NULL}
 };
 
 /* main firmware context */
