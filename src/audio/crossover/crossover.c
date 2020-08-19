@@ -50,6 +50,7 @@ static inline void crossover_free_config(struct sof_crossover_config **config)
  */
 static inline void crossover_reset_state_lr4(struct iir_state_df2t *lr4)
 {
+	rfree(lr4->coef);
 	rfree(lr4->delay);
 
 	lr4->coef = NULL;
@@ -174,11 +175,27 @@ static int crossover_assign_sinks(struct comp_dev *dev,
 static int crossover_init_coef_lr4(struct sof_eq_iir_biquad_df2t *coef,
 				   struct iir_state_df2t *lr4)
 {
-	/* Reuse the same coefficients for biquads so we only
-	 * store one copy of it. The processing functions will
-	 * feed the same coef array to both biquads.
+	int ret;
+
+	/* Only one set of coefficients is stored in config for both biquads
+	 * in series due to identity. To maintain the structure of
+	 * iir_state_df2t, it requires two copies of coefficients in a row.
 	 */
-	lr4->coef = (int32_t *)ASSUME_ALIGNED(coef, 4);
+	lr4->coef = rzalloc(SOF_MEM_ZONE_RUNTIME, 0, SOF_MEM_CAPS_RAM,
+			    sizeof(struct sof_eq_iir_biquad_df2t) * 2);
+	if (!lr4->coef)
+		return -ENOMEM;
+
+	/* coefficients of the first biquad */
+	ret = memcpy_s(lr4->coef, sizeof(struct sof_eq_iir_biquad_df2t),
+		       coef, sizeof(struct sof_eq_iir_biquad_df2t));
+	assert(!ret);
+
+	/* coefficients of the second biquad */
+	ret = memcpy_s(lr4->coef + SOF_EQ_IIR_NBIQUAD_DF2T,
+		       sizeof(struct sof_eq_iir_biquad_df2t),
+		       coef, sizeof(struct sof_eq_iir_biquad_df2t));
+	assert(!ret);
 
 	/* LR4 filters are two 2nd order filters, so only need 4 delay slots
 	 * delay[0..1] -> state for first biquad
